@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Screamometer">
+<meta name="theme-color" content="#4b2e1b">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Screamometer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Cabin:wght@400;600;700&family=Courier+Prime:wght@400;700&family=VT323&display=swap">
+<style>
+/* Layout: a 1970s hi-fi on a walnut sideboard. Brushed-metal VU meter up top, cream paper cards for advice and the logbook below.
+   Deliberately one look in every theme: wood, cream and amber. */
+:root{
+  --wood:#4b2e1b; --wood-hi:#5e3b23; --wood-lo:#3b2314;
+  --paper:#f5e8c8; --face:#f7e2a8; --ink:#2b1a0e; --muted:#7a5a3c; --line:#d6bd86;
+  --mild:#6f8f2a; --rattled:#e2a62a; --beside:#d8641c; --possessed:#b3302a;
+  --accent:#d8641c; --accent-ink:#fff3d9; --led:#ffb03a; --led-bg:#1d120a;
+  --metal-1:#e9e6df; --metal-2:#b9b4aa;
+  --display:"Shrikhand","Cooper Black",Georgia,serif;
+  --body:"Cabin",ui-sans-serif,system-ui,sans-serif;
+  --type:"Courier Prime","Courier New",ui-monospace,monospace;
+  --led-font:"VT323",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+html,body{background:var(--wood);color:var(--ink)}
+body{font-family:var(--body);font-size:16px;line-height:1.5;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;
+  background:
+    repeating-linear-gradient(92deg,transparent 0 22px,rgba(0,0,0,.07) 22px 23px,transparent 23px 61px,rgba(255,220,180,.05) 61px 63px),
+    repeating-linear-gradient(88deg,var(--wood) 0 140px,var(--wood-hi) 140px 210px,var(--wood-lo) 210px 300px,var(--wood) 300px 420px);
+  background-attachment:fixed}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{color:var(--paper)}
+header h1{font-family:var(--display);font-weight:400;font-size:clamp(2.6rem,11vw,4.4rem);line-height:1;margin:0;color:var(--face);
+  text-shadow:3px 3px 0 var(--beside),6px 6px 0 var(--possessed);text-wrap:balance}
+header p{margin:14px 0 0;color:#ead7b0;max-width:52ch}
+.stripes{height:18px;margin-top:14px;max-width:340px;background:linear-gradient(var(--rattled) 0 33%,var(--beside) 33% 66%,var(--possessed) 66%);border-radius:2px}
+.label{font-family:var(--type);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+header .label{color:var(--rattled)}
+/* the hi-fi unit */
+.meter{background:linear-gradient(180deg,var(--metal-1),var(--metal-2));border-radius:10px;padding:18px 18px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -2px 0 rgba(0,0,0,.18),0 10px 24px rgba(0,0,0,.45);
+  background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.12) 0 1px,transparent 1px 3px),linear-gradient(180deg,var(--metal-1),var(--metal-2))}
+.dial{width:100%;max-width:460px;background:radial-gradient(ellipse at 50% 85%,#fff3c8 0%,var(--face) 45%,#e6c47a 100%);border:6px solid var(--ink);border-radius:8px;padding:10px 10px 4px;
+  box-shadow:inset 0 0 22px rgba(120,70,0,.35)}
+.dial svg{width:100%;height:auto;display:block;overflow:visible}
+.dial text{font-family:var(--type);font-weight:700;fill:var(--ink)}
+#needle{transition:transform .12s linear;transform-origin:200px 200px}
+@media (prefers-reduced-motion: reduce){#needle{transition:none}}
+.readout{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.readout div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.readout b{font-family:var(--led-font);font-weight:400;font-size:2rem;line-height:1;color:var(--led);background:var(--led-bg);padding:6px 12px 4px;border-radius:4px;min-width:5ch;text-align:center;
+  text-shadow:0 0 6px rgba(255,150,40,.8);box-shadow:inset 0 2px 6px rgba(0,0,0,.8);font-variant-numeric:tabular-nums}
+.meter .label{color:#4d4338}
+#verdict{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,6.5vw,2.5rem);line-height:1.1;text-align:center;min-height:1.2em;color:var(--ink)}
+#status{color:#4d4338;text-align:center;min-height:1.5em;margin:0;max-width:46ch}
+.controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+button{font:inherit;font-family:var(--type);font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:10px 18px;cursor:pointer;
+  color:var(--ink);background:linear-gradient(180deg,#fbf6ea,#d9d2c2);border:1px solid #8a7f6d;box-shadow:0 3px 0 #7b705e,0 4px 6px rgba(0,0,0,.25)}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #7b705e}
+button.primary{font-size:1.05rem;padding:14px 30px;color:var(--accent-ink);background:linear-gradient(180deg,#ec8a3c,var(--accent));border-color:#8e3d0c;box-shadow:0 4px 0 #8e3d0c,0 6px 10px rgba(0,0,0,.3);text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.recording button.primary{background:linear-gradient(180deg,#d4504a,var(--possessed));border-color:#6e1612;box-shadow:0 4px 0 #6e1612,0 0 18px rgba(230,60,40,.7)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.fallback{font-size:.9rem;color:#4d4338;text-align:center;margin:0;max-width:52ch}
+/* paper cards */
+.card{background:var(--paper);border-radius:6px;padding:20px 20px 22px;box-shadow:0 8px 20px rgba(0,0,0,.4);
+  background-image:repeating-linear-gradient(0deg,transparent 0 27px,rgba(160,120,60,.08) 27px 28px)}
+section h2{font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1.15;margin:0 0 4px;color:var(--ink)}
+.calm{display:flex;flex-direction:column;gap:12px}
+.calm ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:8px}
+.calm li::marker{font-family:var(--type);font-weight:700;color:var(--beside)}
+.pill{display:inline-block;font-family:var(--type);font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:999px;color:#fff6e0;white-space:nowrap;vertical-align:middle}
+.lv-mild{background:var(--mild)} .lv-rattled{background:var(--rattled);color:var(--ink)} .lv-beside{background:var(--beside)} .lv-possessed{background:var(--possessed)}
+.breathe{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.orb{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f5c76a,var(--beside));transform:scale(.55);transition:transform 4s ease-in-out;box-shadow:0 0 0 4px var(--rattled)}
+.orb.big{transform:scale(1)}
+#breathText{font-family:var(--type);min-width:12ch}
+.log table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.log th{text-align:left;font-family:var(--type);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;padding:6px 8px;border-bottom:2px solid var(--ink)}
+.log td{white-space:nowrap;padding:10px 8px;border-bottom:1px dashed var(--line);font-family:var(--type);font-size:.9rem}
+.log tr.example td{color:var(--muted)}
+.tablebox{overflow-x:auto}
+.loghead{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.stats div{background:var(--led-bg);border-radius:6px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;box-shadow:inset 0 2px 6px rgba(0,0,0,.7)}
+.stats .label{color:#c9a46a}
+.stats b{font-family:var(--led-font);font-weight:400;font-size:1.6rem;line-height:1.05;color:var(--led);text-shadow:0 0 6px rgba(255,150,40,.7)}
+@media (max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}}
+.small{font-size:.78rem;padding:8px 12px}
+.linkbtn{background:none;border:none;box-shadow:none;padding:4px 8px;text-decoration:underline;text-underline-offset:4px;color:var(--ink);font-size:.85rem}
+.linkbtn:active{transform:none;box-shadow:none}
+.namer{align-self:stretch;border-top:2px dashed #8a7f6d;padding-top:16px;display:flex;flex-direction:column;gap:12px}
+.namer p{margin:0;color:#4d4338;font-size:.92rem}
+.namegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.namegrid{grid-template-columns:1fr}}
+.namegrid label{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 8px}
+.namegrid input{grid-column:1/-1;font:inherit;font-family:var(--type);padding:10px 12px;border-radius:4px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);min-width:0}
+.namegrid input:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.sw{width:12px;height:12px;border-radius:50%;display:inline-block}
+.primary-sm{color:var(--accent-ink);background:linear-gradient(180deg,#5a4636,var(--ink));border-color:#000;box-shadow:0 3px 0 #000}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.9rem}
+[hidden]{display:none!important}
+.sens{display:flex;flex-direction:column;align-items:center;gap:6px}
+.seg{display:flex;gap:0}
+.seg button{border-radius:0;font-size:.75rem;padding:8px 14px;box-shadow:0 3px 0 #7b705e}
+.seg button:first-child{border-radius:6px 0 0 6px}
+.seg button:last-child{border-radius:0 6px 6px 0}
+.seg button[aria-checked="true"]{background:linear-gradient(180deg,#5a4636,var(--ink));color:var(--led);box-shadow:inset 0 2px 4px rgba(0,0,0,.6);transform:translateY(2px)}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <div class="label">Frustration instrument · calibrated in lungs</div>
+    <h1>Screamometer</h1>
+    <div class="stripes" aria-hidden="true"></div>
+    <p>Press the button, let it out, and the dial will tell you how far gone you are. Every scream is logged with the time, and you get a few ways to come back down.</p>
+  </header>
+
+  <div class="meter" id="meter">
+    <div class="dial" aria-hidden="true">
+      <svg viewBox="0 0 400 230">
+        <path d="M30 200 A170 170 0 0 1 79.8 79.8" stroke="var(--mild)" stroke-width="14" fill="none"/>
+        <path d="M79.8 79.8 A170 170 0 0 1 200 30" stroke="var(--rattled)" stroke-width="14" fill="none"/>
+        <path d="M200 30 A170 170 0 0 1 320.2 79.8" stroke="var(--beside)" stroke-width="14" fill="none"/>
+        <path d="M320.2 79.8 A170 170 0 0 1 370 200" stroke="var(--possessed)" stroke-width="14" fill="none"/>
+        <g id="ticks"></g>
+        <g id="dialLabels"></g>
+        <text x="200" y="138" font-size="26" text-anchor="middle" style="font-family:var(--display);font-weight:400;fill:var(--ink)">SCREAM</text>
+        <text x="200" y="158" font-size="10" text-anchor="middle" letter-spacing="3">VU · dB</text>
+        <line id="peakMark" x1="200" y1="44" x2="200" y2="20" stroke="var(--ink)" stroke-width="3" stroke-linecap="round" style="transform-origin:200px 200px;transform:rotate(-90deg)"/>
+        <g id="needle" style="transform:rotate(-90deg)">
+          <line x1="200" y1="200" x2="200" y2="40" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/><line x1="200" y1="40" x2="200" y2="70" stroke="var(--possessed)" stroke-width="3" stroke-linecap="round"/>
+        </g>
+        <circle cx="200" cy="200" r="13" fill="var(--ink)"/>
+        <circle cx="200" cy="200" r="5" fill="var(--face)"/>
+      </svg>
+    </div>
+    <div id="verdict">Ready when you are</div>
+    <div class="readout">
+      <div><span class="label">Score</span><b id="rScore">0</b></div>
+      <div><span class="label">Peak</span><b id="rPeak">– dB</b></div>
+      <div><span class="label">Duration</span><b id="rDur">0.0 s</b></div>
+    </div>
+    <p id="status">Allow the microphone when asked. Recording stops on its own after a couple of seconds of quiet.</p>
+    <div class="controls">
+      <button class="primary" id="go">Start screaming</button>
+    </div>
+    <p class="fallback" id="fallback" hidden>The microphone is blocked here. Open the Screamometer Android app, or open the page directly in Chrome or Safari, and allow the microphone.</p>
+    <div class="sens" role="radiogroup" aria-label="Mic sensitivity">
+      <span class="label">Mic sensitivity</span>
+      <div class="seg">
+        <button type="button" role="radio" data-s="low">Low</button>
+        <button type="button" role="radio" data-s="normal">Normal</button>
+        <button type="button" role="radio" data-s="high">High</button>
+      </div>
+    </div>
+    <button class="linkbtn" id="nameBtn" aria-expanded="false" aria-controls="namer">Name your levels</button>
+    <form class="namer" id="namer" hidden>
+      <p>Call the four states whatever fits you. They go from quietest to loudest, and the dial, verdict and log all use your names.</p>
+      <div class="namegrid">
+        <label><span class="sw lv-mild"></span><span class="label">Level 1 · quietest</span><input id="n0" maxlength="24" autocomplete="off"></label>
+        <label><span class="sw lv-rattled"></span><span class="label">Level 2</span><input id="n1" maxlength="24" autocomplete="off"></label>
+        <label><span class="sw lv-beside"></span><span class="label">Level 3</span><input id="n2" maxlength="24" autocomplete="off"></label>
+        <label><span class="sw lv-possessed"></span><span class="label">Level 4 · loudest</span><input id="n3" maxlength="24" autocomplete="off"></label>
+      </div>
+      <div class="controls" style="justify-content:flex-start">
+        <button class="small primary-sm" type="submit">Save names</button>
+        <button class="small" type="button" id="nameReset">Use the originals</button>
+        <span id="nameMsg" class="fallback"></span>
+      </div>
+    </form>
+  </div>
+
+  <section class="calm card" aria-live="polite">
+    <div>
+      <div class="label">Bring it down</div>
+      <h2 id="calmTitle">Ways to calm yourself down</h2>
+    </div>
+    <div id="calmIntro" style="color:var(--muted)">Scream first and these will be tuned to how rattled you are. Until then, here are some all-rounders.</div>
+    <ol id="calmList"></ol>
+    <div class="breathe">
+      <div class="orb" id="orb"></div>
+      <button class="small" id="breathBtn">Breathe with me (box breathing)</button>
+      <span id="breathText"></span>
+    </div>
+  </section>
+
+  <section class="log card">
+    <div class="loghead">
+      <div><div class="label">Logbook</div><h2>Your screams</h2></div>
+      <div class="confirm" id="clearBox"><button class="small" id="clearBtn">Clear log</button></div>
+    </div>
+    <div class="stats">
+      <div><span class="label">Screams</span><b id="sCount">0</b></div>
+      <div><span class="label">Today</span><b id="sToday">0</b></div>
+      <div><span class="label">Loudest</span><b id="sMax">–</b></div>
+      <div><span class="label">Usual state</span><b id="sMode">–</b></div>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>When</th><th>Level</th><th>Score</th><th>Peak</th><th>Length</th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <p class="fallback" style="text-align:left;margin-top:10px">Saved in this browser only. Nobody else can see it.</p>
+  </section>
+</div>
+
+<script>
+(function(){
+const LEVELS=[
+ {key:'mild',name:'Mild',max:25},
+ {key:'rattled',name:'Rattled',max:50},
+ {key:'beside',name:'Beside yourself',max:75},
+ {key:'possessed',name:'Possessed',max:101}];
+const levelFor=s=>LEVELS.find(l=>s<l.max);
+const DEFAULT_NAMES=LEVELS.map(l=>l.name);
+try{const n=JSON.parse(localStorage.getItem('screamnames')||'null');if(Array.isArray(n)&&n.length===4)n.forEach((v,i)=>{if(typeof v==='string'&&v.trim())LEVELS[i].name=v.trim()})}catch(e){}
+
+const TIPS={
+ mild:["Roll your shoulders back five times and unclench your jaw.","Drink a full glass of cold water, slowly.","Name the thing that annoyed you in one sentence, then let it be one sentence.","Step outside or open a window for two minutes of fresh air.","Put on one song you love and do nothing else until it ends."],
+ rattled:["Do three rounds of box breathing with the button below.","Walk for ten minutes, ideally somewhere without a screen.","Write down what set you off, then write what you can actually control about it.","Splash cold water on your face or hold something cold for 30 seconds.","Text someone you like something that has nothing to do with the problem."],
+ beside:["Breathe out longer than you breathe in: in for 4, out for 8, ten times.","Use 5‑4‑3‑2‑1: name 5 things you see, 4 you hear, 3 you can touch, 2 you smell, 1 you taste.","Get your body moving hard for two minutes: stairs, star jumps, a brisk walk.","Hold off on replying to anyone for at least 20 minutes.","Tense every muscle for 5 seconds, then release. Repeat three times."],
+ possessed:["Stop and leave the room. Physical distance first, decisions later.","Cold reset: hold ice or run your wrists under cold water for 30 seconds.","Do slow breathing until the dial would read Mild: in 4, hold 4, out 6.","Call or sit with someone you trust. You don't have to explain it well.","Don't send, sign or decide anything for the next hour.","If you feel unsafe or this keeps happening, talk to a doctor or a support line near you."]};
+const GENERAL=["Do three rounds of box breathing with the button below.","Unclench your jaw and drop your shoulders.","Walk for ten minutes without your phone."];
+
+const $=id=>document.getElementById(id);
+let log=[];
+try{log=JSON.parse(localStorage.getItem('screamlog')||'[]')}catch(e){log=[]}
+function save(){try{localStorage.setItem('screamlog',JSON.stringify(log))}catch(e){}}
+
+// dial ticks
+(function(){let g='';for(let i=0;i<=20;i++){const a=Math.PI*(1-i/20),r1=i%5?150:143,r2=158;
+ g+=`<line x1="${200+r1*Math.cos(a)}" y1="${200-r1*Math.sin(a)}" x2="${200+r2*Math.cos(a)}" y2="${200-r2*Math.sin(a)}" stroke="var(--ink)" stroke-width="${i%5?1.2:2.4}"/>`}
+ $('ticks').innerHTML=g})();
+// dial labels follow the level names; long names wrap onto two lines
+const LABEL_POS=[[88,158],[150,96],[252,95],[306,158]];
+function esc(t){return t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function drawLabels(){
+ $('dialLabels').innerHTML=LEVELS.map((l,i)=>{
+  const [x,y]=LABEL_POS[i],name=l.name.toUpperCase();let lines=[name];
+  if(name.length>10&&name.includes(' ')){const w=name.split(' '),h=Math.ceil(w.length/2);lines=[w.slice(0,h).join(' '),w.slice(h).join(' ')]}
+  const longest=Math.max(...lines.map(t=>t.length)),fs=longest>12?Math.max(8,Math.round(12*12/longest)):12;
+  return lines.map((t,j)=>`<text x="${x}" y="${y+(j-(lines.length-1)/2)*(fs+2)}" font-size="${fs}" text-anchor="middle">${esc(t)}</text>`).join('')}).join('');
+}
+drawLabels();
+const setNeedle=s=>{$('needle').style.transform=`rotate(${-90+Math.max(0,Math.min(100,s))*1.8}deg)`};
+const setPeak=s=>{$('peakMark').style.transform=`rotate(${-90+Math.max(0,Math.min(100,s))*1.8}deg)`};
+
+// scoring: loudness from peak level (dBFS) plus a bonus for how long you kept it up
+// sensitivity sets the quietest level that registers on the dial (dBFS); full scale is 0 dBFS
+const SENS={low:-20,normal:-28,high:-40};
+let sens='normal';
+try{const v=localStorage.getItem('screamsens');if(SENS[v])sens=v}catch(e){}
+const floorDb=()=>SENS[sens];
+const thresh=()=>floorDb()+4;
+const durBonus=d=>Math.min(20,d/8*20);
+const loudScore=db=>Math.max(0,Math.min(80,(db-floorDb())/-floorDb()*80));
+const score=(peakDb,dur)=>Math.round(loudScore(peakDb)+durBonus(dur));
+
+function show(s,peakDb,dur){
+ $('rScore').textContent=s;
+ $('rPeak').textContent=isFinite(peakDb)?peakDb.toFixed(0)+' dB':'– dB';
+ $('rDur').textContent=dur.toFixed(1)+' s';
+}
+
+function finish(peakDb,dur){
+ const s=score(peakDb,dur), lv=levelFor(s);
+ if(dur<0.25){ $('verdict').textContent='Was that a scream?'; $('status').textContent='Barely heard a thing. Get closer to the mic and really go for it.'; setNeedle(0); return }
+ setNeedle(s);setPeak(s);show(s,peakDb,dur);
+ $('verdict').innerHTML=`<span style="color:var(--${lv.key})">${esc(lv.name)}</span>`;
+ $('status').textContent='Logged. Scroll down for what to do next.';
+ log.unshift({t:Date.now(),s,db:Math.round(peakDb),d:Math.round(dur*10)/10,lv:lv.key});
+ log=log.slice(0,500);save();renderLog();renderTips(lv);
+}
+
+function renderTips(lv){
+ lastLv=lv;
+ const ol=$('calmList');ol.innerHTML='';
+ let items=GENERAL;
+ if(lv){
+  $('calmTitle').innerHTML=`Calming down from <span class="pill lv-${lv.key}">${esc(lv.name)}</span>`;
+  $('calmIntro').textContent={mild:'Barely a ripple. A small reset will do.',rattled:'You are wound up. Give your body a few minutes to settle.',beside:'That was a lot. Work on your body first, then your thoughts.',possessed:'Full meltdown. Get some distance and cool down before anything else.'}[lv.key];
+  items=TIPS[lv.key].slice().sort(()=>Math.random()-.5).slice(0,4);
+  if(lv.key==='possessed'&&!items.includes(TIPS.possessed[5]))items[3]=TIPS.possessed[5];
+ }
+ items.forEach(t=>{const li=document.createElement('li');li.textContent=t;ol.appendChild(li)});
+}
+
+const EXAMPLES=[{t:Date.now()-3600e3*2,s:63,db:-11,d:3.4,lv:'beside',ex:1},{t:Date.now()-86400e3,s:31,db:-24,d:1.6,lv:'rattled',ex:1},{t:Date.now()-86400e3*2,s:88,db:-4,d:6.2,lv:'possessed',ex:1}];
+function fmt(t){const d=new Date(t);return d.toLocaleDateString(undefined,{day:'numeric',month:'short'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}
+function renderLog(){
+ const rows=log.length?log:EXAMPLES;
+ $('logBody').innerHTML=rows.map(e=>{const lv=LEVELS.find(l=>l.key===e.lv);
+  return `<tr class="${e.ex?'example':''}"><td>${e.ex?'Example · ':''}${fmt(e.t)}</td><td><span class="pill lv-${lv.key}">${esc(lv.name)}</span></td><td>${e.s}</td><td>${e.db} dB</td><td>${e.d.toFixed(1)} s</td></tr>`}).join('');
+ $('clearBox').hidden=!log.length;
+ const today=new Date().toDateString();
+ $('sCount').textContent=log.length;
+ $('sToday').textContent=log.filter(e=>new Date(e.t).toDateString()===today).length;
+ $('sMax').textContent=log.length?Math.max(...log.map(e=>e.s)):'–';
+ if(log.length){const c={};log.forEach(e=>c[e.lv]=(c[e.lv]||0)+1);const k=Object.keys(c).sort((a,b)=>c[b]-c[a])[0];$('sMode').textContent=LEVELS.find(l=>l.key===k).name}else $('sMode').textContent='–';
+}
+
+function askClear(){
+ const box=$('clearBox');
+ box.innerHTML='<span>Delete every entry?</span><button class="small" id="yes">Delete</button><button class="small" id="no">Keep</button>';
+ const restore=()=>{box.innerHTML='<button class="small" id="clearBtn">Clear log</button>';$('clearBtn').onclick=askClear};
+ $('yes').onclick=()=>{log=[];save();restore();renderLog()};
+ $('no').onclick=restore;
+}
+$('clearBtn').onclick=askClear;
+
+// live microphone
+let ctx,stream,raf,rec=false;
+async function start(){
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+ }catch(e){
+  $('fallback').hidden=false;$('status').textContent='The microphone is not available here.';return;
+ }
+ ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();
+ await ctx.resume();
+ const src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();an.fftSize=2048;src.connect(an);
+ const buf=new Float32Array(an.fftSize);
+ rec=true;$('meter').classList.add('recording');$('go').textContent='Stop';
+ $('verdict').textContent='Listening…';$('status').textContent='Go on. Let it all out.';
+ let peak=-Infinity,dur=0,heard=false,quiet=0,last=performance.now(),t0=last,smooth=-90;
+ const tick=now=>{
+  const dt=(now-last)/1000;last=now;
+  an.getFloatTimeDomainData(buf);let sum=0;for(const v of buf)sum+=v*v;
+  const db=20*Math.log10(Math.sqrt(sum/buf.length)+1e-9);
+  smooth=Math.max(db,smooth-dt*40);
+  if(db>thresh()){dur+=dt;heard=true;quiet=0;peak=Math.max(peak,db)}else if(heard)quiet+=dt;
+  setNeedle(loudScore(smooth)+durBonus(dur));show(score(isFinite(peak)?peak:-90,dur),peak,dur);
+  if((heard&&quiet>1.8)||now-t0>20000){stop();return}
+  if(!heard&&now-t0>8000){stop(true);return}
+  raf=requestAnimationFrame(tick);
+ };
+ raf=requestAnimationFrame(tick);
+ stopFn=(silent)=>{finishUp();if(silent){$('verdict').textContent='Nothing heard';$('status').textContent='No scream picked up in 8 seconds. Try again a bit closer to the mic.';setNeedle(0)}else finish(peak,dur)};
+}
+let stopFn=null;
+function finishUp(){cancelAnimationFrame(raf);rec=false;$('meter').classList.remove('recording');$('go').textContent='Scream again';stream&&stream.getTracks().forEach(t=>t.stop())}
+function stop(silent){if(stopFn){const f=stopFn;stopFn=null;f(silent)}}
+$('go').onclick=()=>rec?stop():start();
+if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)$('fallback').hidden=false;
+
+// box breathing
+let bTimer=null;
+$('breathBtn').onclick=()=>{
+ if(bTimer){clearInterval(bTimer);bTimer=null;$('breathText').textContent='';$('orb').classList.remove('big');$('breathBtn').textContent='Breathe with me (box breathing)';return}
+ const steps=['Breathe in','Hold','Breathe out','Hold'];let i=0,n=4,round=1;
+ $('breathBtn').textContent='Stop breathing guide';
+ const step=()=>{ if(i%4===0)$('orb').classList.add('big'); if(i%4===2)$('orb').classList.remove('big');
+  $('breathText').textContent=`${steps[i%4]} · ${n}   (round ${round}/4)`};
+ step();
+ bTimer=setInterval(()=>{n--;if(n===0){n=4;i++;if(i%4===0)round++;if(round>4){$('breathBtn').click();$('breathText').textContent='Nice. How do you feel?';return}}step()},1000);
+};
+
+// sensitivity switch
+function drawSens(){document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.s===sens)))}
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{sens=b.dataset.s;try{localStorage.setItem('screamsens',sens)}catch(e){}drawSens()});
+drawSens();
+
+// naming panel
+let lastLv=null;
+function fillNames(){LEVELS.forEach((l,i)=>{$('n'+i).value=l.name;$('n'+i).placeholder=DEFAULT_NAMES[i]})}
+$('nameBtn').onclick=()=>{const f=$('namer');f.hidden=!f.hidden;$('nameBtn').setAttribute('aria-expanded',String(!f.hidden));$('nameMsg').textContent='';if(!f.hidden){fillNames();$('n0').focus()}};
+function applyNames(names,msg){
+ names.forEach((v,i)=>LEVELS[i].name=v);
+ try{localStorage.setItem('screamnames',JSON.stringify(names))}catch(e){}
+ drawLabels();renderLog();if(lastLv)renderTips(lastLv);
+ if(lastLv&&$('verdict').querySelector('span'))$('verdict').innerHTML=`<span style="color:var(--${lastLv.key})">${esc(lastLv.name)}</span>`;
+ fillNames();$('nameMsg').textContent=msg;
+}
+$('namer').onsubmit=e=>{e.preventDefault();applyNames([0,1,2,3].map(i=>$('n'+i).value.trim()||DEFAULT_NAMES[i]),'Saved.')};
+$('nameReset').onclick=()=>applyNames(DEFAULT_NAMES.slice(),'Back to the originals.');
+
+renderLog();renderTips(null);
+})();
+</script>
+
+</body>
+</html>
